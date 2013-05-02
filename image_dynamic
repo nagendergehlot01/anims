@@ -1,0 +1,156 @@
+echo <<<_END
+<div class="main">
+  
+  <div id="wrap">
+	<p class="admin"></p>
+		<form method="post"  action="$_SERVER[PHP_SELF]" enctype="multipart/form-data" id="formID">
+			<table id="my" cellpadding="2" cellspacing="2" border="0" width="100% >
+				<tr>
+					<td><input  type="hidden"  name="hidden" id="hidden" /></td>	 
+					<td><INPUT type="checkbox" name="chk"/></td>
+					
+					<td> <span><strong>Title</strong></span>
+						<div class="field">
+							<label class="file-upload">
+								<input  type="text" class="validate[required]"   name="title1" id="title1" />
+							</label>
+						</div>
+					</td>
+					
+					<td><span><strong>Upload file I</strong></span>
+						<div class="field">
+							<label class="file-upload">
+								<input  type="file"    name="test1" id="test1"  />
+							</label>        
+						</div> 
+					</td>
+				</tr>	 
+				<table>
+				
+					<tr>
+						<td>
+							<input  type="submit" name="submit" value="submit" class="btn btn-warning cancel" />
+						 </td>
+					</tr>
+					
+					<tr>
+					
+						<td valign="top" align="left"  colspan="3" class="add_row">
+							<span class="btn btn-success fileinput-button" onclick="addRow('my')" id="mnews">
+								<i class="icon-plus icon-white"></i>
+								<span>Add New</span>
+							
+							</span>
+						</td>
+						
+						<td valign="" align=""  class="del_row add_row" >
+							<button class="btn btn-danger delete" type="button" onclick="deleteRow('my')" id="news">
+								<i class="icon-trash icon-white"></i>
+								<span>Delete</span>
+							</button>
+						</td>
+					</tr> 
+				</table>	 
+			</table>
+		</form>
+	</div>
+_END;
+					
+	if (isset($_POST['submit']))
+	{
+
+	 $count =  $_POST['hidden'];
+		 if($count == '')
+		 {
+		$count = 1 ;
+		 }
+	if($count!='')
+	{
+
+		for($i=1; $i<=$count; $i++)
+		{ 
+			$title = $_POST['title'.$i];
+			//$Wtitle = $_POST['Wtitle'.$i];
+			$fileName = $_FILES['test'.$i]['name'];
+			
+			$filePath = ADM_IMAGES_DIR. $fileName;
+			$watermark = ADM_IMAGES_WaterMark_DIR.$fileName;
+			$small = ADM_IMAGES_Small_DIR.$fileName;
+			$ImageWaterMark = ADM_IMAGES_ImageWaterMark_DIR.$fileName;
+			
+			$size = 10000000000;
+			$select = mysql_query("select * from image_gallery ");
+			$total_rows = mysql_num_rows($select);
+	// echo $total_rows;
+	// exit;
+			$form_data = array(
+					'title' => $title,
+					'BannerAdTitle' => $fileName,
+					'BannerAdImage' => $filePath
+				 
+					);
+					
+			if($total_rows == 6)
+			{
+				dbRowUpdate('image_gallery',$form_data, "WHERE image_id = '$i'");
+		
+				// $query = mysql_query("UPDATE `image_gallery` SET `title`='$title',`BannerAdTitle`='$fileName',`BannerAdImage`='$filePath' WHERE `image_id`=$i");
+			}else
+			{
+				dbRowInsert('image_gallery', $form_data);
+				// echo $query = mysql_query("INSERT INTO image_gallery (title,BannerAdTitle,BannerAdImage ) VALUES ('$title','$fileName','$filePath')");
+			}
+				$result = PIPHP_UploadFile("test".$i,
+				array("image/jpg","image/jpeg", "image/pjpeg", "image/png", "image/gif"), $size);
+			?>
+			<div class="main_image">
+			<?
+			if ($result[0] == 0)
+			{ 
+				file_put_contents($filePath, $result[2]);
+				
+				echo "File received with the type '$result[1]' and saved ";
+				echo "as <a class='group1' href=$filePath>$fileName</a><br />";
+			
+				// pr($Wtitle,1);
+					PIPHP_ImageWatermark($filePath, $watermark, "png", 70,
+					neeraj, "fonts/Signerica_Thin.ttf", 50, "plum", 100);
+					echo "<div class='water_image'><br /><br />This is Signature watermark ";
+					echo "<br /><br /><img src='$watermark'><br /><br /></div>";
+					create_watermark($filePath, $ImageWaterMark);
+					
+		echo "<div class='image_water water_image'><br /><br />This is Image watermark image";
+					echo "<br /><br /><img src='$ImageWaterMark'><br /><br /></div>";
+					// displayUploadImage ($fileName,'View Image');
+			}
+			if($fileName != '')
+			{
+				$image = imagecreatefromjpeg($filePath);
+				$newim = PIPHP_ImageResize($image, 269, 204);
+				
+				imagejpeg($newim, $small);
+				echo "<div class='resize_image water_image'><br /><br />This image has been resized to 269 x 204 pixels";
+				echo "<br /><br /><img src='$small'><br /><br /></div>";
+				//create_watermark($filePath, $small);
+					// echo "<br /><br /><img src='$small'>";
+			}
+			else
+			{
+			  if ($result[0] == -2) 
+			  echo"<div class='error'>";
+			  echo "Wrong file type<br />";
+			  if ($result[0] == -3) echo "Maximum length exceeded<br />";
+			  if ($result[0] > 0)   echo "Error code: $result<br />";
+			  echo "File upload failed<br />";
+			  echo"</div>";
+			}?>
+			</div>
+		<?}
+	}
+		
+	}
+
+
+		?>
+	<footer></footer> 
+	</div>
